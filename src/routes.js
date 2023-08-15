@@ -1,9 +1,9 @@
 const express = require('express');
+const { listAllUsers, registerUser } = require('./controlls/users');
 
 const routes = express();
 
-routes.get('/', (req, res) => {
-  return res.status(200).json("tudo ok!")
-})
+routes.get('/', listAllUsers)
+routes.post('/user', registerUser)
 
 module.exports = { routes };
