@@ -15,10 +15,10 @@ async function listAllUsers(req, res) {
 }
 
 async function registerUser(req, res) {
-  const { user_name, user_email, user_password } = req.body;
+  const { user_name, user_email, user_password, user_idade, user_url_image, user_cargo } = req.body;
 
-  if (!user_name || !user_password || !user_email) {
-    return res.status(400).json({ mensagem: "todos os campos são obrigatorios" })
+  if (!user_name || !user_password || !user_email || !user_cargo) {
+    return res.status(400).json({ mensagem: "Os campos Nome, E-mail, Senha e Cargo são obrigatórios" })
   }
 
   try {
@@ -29,16 +29,21 @@ async function registerUser(req, res) {
     }
 
     const criptoPassword = await bcrypt.hash(user_password, 10);
+    const user_admission_date = new Date()
 
     const response = await knex("users").insert({
       user_name,
       user_email,
-      user_password: criptoPassword
+      user_password: criptoPassword,
+      user_idade,
+      user_url_image,
+      user_admission_date,
+      user_cargo
     })
 
     return res.status(201).json({ mensagem: "usuario cadastrado" });
   } catch (error) {
-    return res.status(500).json(error)
+    return res.status(500).json({ mensagem: "erro interno do servidor" });
   }
 }
 
@@ -55,9 +60,7 @@ async function loginUser(req, res) {
     const validPassword = await bcrypt.compare(user_password, user.user_password);
 
     if (!validPassword) {
-      console.log(validPassword);
       return res.status(400).json({ mensagem: "email ou senha invalidos" });
-
     }
 
     const token = jwt.sign({ id: user.id }, "UmaSenhaSegura", {
