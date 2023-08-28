@@ -1,3 +1,4 @@
+require('dotenv').config()
 const knex = require('../connection');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -57,13 +58,11 @@ async function loginUser(req, res) {
       return res.status(404).json({ mensagem: "email ou senha invalidos" });
     }
 
-    const validPassword = await bcrypt.compare(user_password, user.user_password);
-
-    if (!validPassword) {
-      return res.status(400).json({ mensagem: "email ou senha invalidos" });
+    if (!(await bcrypt.compare(user_password, user.user_password))) {
+      return res.status(400).json({ mensagem: "senha invalida" });
     }
 
-    const token = jwt.sign({ id: user.id }, "UmaSenhaSegura", {
+    const token = jwt.sign({ id: user.id }, process.env.HASH, {
       expiresIn: "1h",
     });
 
@@ -76,8 +75,15 @@ async function loginUser(req, res) {
   }
 }
 
+function getUser(req, res) {
+  return res.status(200).json(req.usuario);
+}
+
+as
+
 module.exports = {
   listAllUsers,
   registerUser,
-  loginUser
+  loginUser,
+  getUser
 }

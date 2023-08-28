@@ -1,31 +1,33 @@
+require('dotenv').config();
 const jwt = require("jsonwebtoken");
-const pool = require("../conection");
 const knex = require("../connection");
 
-async function verifyrUserLoged(req, res, next) {
+async function verificarLogin(req, res, next) {
   const { authorization } = req.headers;
 
   if (!authorization) {
-    return res.status(401).json({ mensagem: "não autorizado" });
+    return res.status(401).json("Não autorizado");
   }
 
-  const token = authorization.split(" ")[1];
-
   try {
-    const { id } = jwt.verify(token, "UmaSenhaSegura");
+    const token = authorization.replace('Bearer ', '').trim();
 
-    const user = await knex('users').where('id', id).first();
+    const { id } = jwt.verify(token, process.env.HASH);
 
-    if (!user) {
-      return res.status(404).json({ mensagem: "não encontrado" });
+    const usuarioExiste = await knex('users').where({ id }).first();
+
+    if (!usuarioExiste) {
+      return res.status(404).json('Usuario não encontrado');
     }
 
-    req.usuario = user;
+    const { user_password, ...usuario } = usuarioExiste;
+
+    req.usuario = usuario;
 
     next();
   } catch (error) {
-    return res.status(401).json({ mensagem: "não autorizado" });
+    return res.status(400).json(error.message);
   }
 }
 
-module.exports = verifyrUserLoged;
+module.exports = verificarLogin;
