@@ -79,8 +79,6 @@ function getUser(req, res) {
   return res.status(200).json(req.usuario);
 }
 
-as
-
 module.exports = {
   listAllUsers,
   registerUser,
