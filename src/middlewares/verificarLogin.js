@@ -20,9 +20,9 @@ async function verificarLogin(req, res, next) {
       return res.status(404).json('Usuario não encontrado');
     }
 
-    const { user_password, ...usuario } = usuarioExiste;
+    const { password, ...usuario } = usuarioExiste;
 
-    req.usuario = usuario;
+    req.userLoged = usuario;
 
     next();
   } catch (error) {

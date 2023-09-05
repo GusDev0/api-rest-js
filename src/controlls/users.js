@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 async function listAllUsers(req, res) {
   try {
-    const response = await knex.select('user_name', 'user_email').from('users')
+    const response = await knex.select('name', 'email').from('users')
 
     return res.status(200).json(response)
   } catch (error) {
@@ -16,30 +16,32 @@ async function listAllUsers(req, res) {
 }
 
 async function registerUser(req, res) {
-  const { user_name, user_email, user_password, user_idade, user_url_image, user_cargo } = req.body;
+  const { name, email, password, idade, url_image, cargo } = req.body;
 
-  if (!user_name || !user_password || !user_email || !user_cargo) {
+  if (!name || !password || !email || !cargo) {
     return res.status(400).json({ mensagem: "Os campos Nome, E-mail, Senha e Cargo são obrigatórios" })
   }
 
   try {
-    const emailExist = await knex("users").where("user_email", user_email).first()
+    const emailExist = await knex("users").where("email", email).first()
 
     if (emailExist) {
       return res.status(400).json({ mensagem: "não pode usar esse email" })
     }
 
-    const criptoPassword = await bcrypt.hash(user_password, 10);
-    const user_admission_date = new Date()
+    if (password) {
+      const criptoPassword = await bcrypt.hash(password, 10);
+    }
+    const admission_date = new Date()
 
     const response = await knex("users").insert({
-      user_name,
-      user_email,
-      user_password: criptoPassword,
-      user_idade,
-      user_url_image,
-      user_admission_date,
-      user_cargo
+      name,
+      email,
+      password: criptoPassword,
+      idade,
+      url_image,
+      admission_date,
+      cargo
     })
 
     return res.status(201).json({ mensagem: "usuario cadastrado" });
@@ -49,16 +51,16 @@ async function registerUser(req, res) {
 }
 
 async function loginUser(req, res) {
-  const { user_email, user_password } = req.body;
+  const { email, password } = req.body;
 
   try {
-    const user = await knex('users').where('user_email', user_email).first()
+    const user = await knex('users').where('email', email).first()
 
     if (!user) {
       return res.status(404).json({ mensagem: "email ou senha invalidos" });
     }
 
-    if (!(await bcrypt.compare(user_password, user.user_password))) {
+    if (!(await bcrypt.compare(password, user.password))) {
       return res.status(400).json({ mensagem: "senha invalida" });
     }
 
@@ -66,7 +68,7 @@ async function loginUser(req, res) {
       expiresIn: "1h",
     });
 
-    const { user_password: _, ...userLoged } = user;
+    const { password: _, ...userLoged } = user;
 
     return res.json({ usuario: userLoged, token });
   } catch (error) {
@@ -75,13 +77,45 @@ async function loginUser(req, res) {
   }
 }
 
+async function updateUser(req, res) {
+  let { name, email, password, idade, cargo } = req.body;
+  const { userLoged } = req
+
+  try {
+
+    if (email) {
+      const userExist = await knex('users').where('email', email).first()
+      if (userExist.email) {
+        return res.status(400).json({ mensagem: "E-mail não válido para atualização" });
+      }
+    }
+
+    if (password) {
+       password = await bcrypt.hash(password, 10);
+    }
+
+    const updatedUser = await knex('users').where('id', userLoged.id).update({
+      name,
+      email,
+      password,
+      idade,
+      cargo
+    })
+
+    return res.status(200).json({ mensagem: "Usuário atualizado com sucesso!" });
+  } catch (error) {
+    return res.status(500).json({ mensagem: "Erro interno do servidor" });
+  }
+}
+
 function getUser(req, res) {
-  return res.status(200).json(req.usuario);
+  return res.status(200).json(req.userLoged);
 }
 
 module.exports = {
   listAllUsers,
   registerUser,
   loginUser,
-  getUser
+  getUser,
+  updateUser
 }
