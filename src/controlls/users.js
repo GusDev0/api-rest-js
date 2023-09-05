@@ -29,9 +29,7 @@ async function registerUser(req, res) {
       return res.status(400).json({ mensagem: "não pode usar esse email" })
     }
 
-    if (password) {
-      const criptoPassword = await bcrypt.hash(password, 10);
-    }
+    const criptoPassword = await bcrypt.hash(password, 10);
     const admission_date = new Date()
 
     const response = await knex("users").insert({
@@ -46,6 +44,7 @@ async function registerUser(req, res) {
 
     return res.status(201).json({ mensagem: "usuario cadastrado" });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ mensagem: "erro interno do servidor" });
   }
 }
@@ -91,7 +90,7 @@ async function updateUser(req, res) {
     }
 
     if (password) {
-       password = await bcrypt.hash(password, 10);
+      password = await bcrypt.hash(password, 10);
     }
 
     const updatedUser = await knex('users').where('id', userLoged.id).update({
@@ -112,10 +111,22 @@ function getUser(req, res) {
   return res.status(200).json(req.userLoged);
 }
 
+async function deleteUser(req, res) {
+  const { userLoged } = req
+  try {
+    const userDeleted = await knex('users').where('id', userLoged.id).delete()
+
+    return res.status(204).json({ mensagem: 'Usuário deletado com sucesso!' })
+  } catch (error) {
+    return res.status(500).json({ mensagem: "Erro interno do servidor" });
+  }
+}
+
 module.exports = {
   listAllUsers,
   registerUser,
   loginUser,
   getUser,
-  updateUser
+  updateUser,
+  deleteUser
 }
