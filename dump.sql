@@ -7,6 +7,11 @@ create table users(
   password text not null,
   idade integer,
   url_image text,
-  admission_date date,
-  cargo text not null 
+  subscribe_date date
+)
+
+create table posts(
+  id serial primary key,
+  conteudo text,
+  id_users foreign key references users(id)
 )

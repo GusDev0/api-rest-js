@@ -1,5 +1,6 @@
 require('dotenv').config()
-const aws = require('aws-sdk')
+const aws = require('aws-sdk');
+const knex = require('../connection');
 
 const endpoint = new aws.Endpoint(process.env.ENDPOINT)
 
@@ -15,24 +16,21 @@ async function uploadFile(req, res) {
   const { file } = req;
 
   try {
+    const { max } = await knex('users').max('id').first()
+
     const arquivo = await s3.upload({
       Bucket: process.env.BUCKET,
-      Key: file.originalname,
+      Key: `users/${max + 1}/profile-picture.png`,
       Body: file.buffer,
       ContentType: file.mimetype
     }).promise()
 
-    console.log(arquivo);
-
-    return res.json(arquivo)
+    return res.json(arquivo.Location)
   } catch (error) {
     return res.json(error)
   }
 }
 
-
-
 module.exports = {
-  uploadFile,
-  loadFile
+  uploadFile
 }
